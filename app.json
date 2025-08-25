@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Yomu",
+    "slug": "Yomu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/app.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "jsEngine": "hermes",
+    "androidStatusBar": {
+      "barStyle": "dark-content"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#000000"
+    },
+    "splash": {
+      "image": "./assets/splashscreen.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app.png",
+        "backgroundColor": "#000000"
+      },
+      "usesCleartextTraffic": true,
+      "package": "com.Srpboyz.Yomu"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5bb95998-f760-42c4-b451-5b4eadc0fb0a"
+      }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}
