@@ -2,19 +2,17 @@ import { useEffect, useRef } from "react"
 import { Text, TextInput, View } from "react-native"
 import { SelectList } from 'react-native-dropdown-select-list'
 import { useDispatch, useSelector } from "react-redux"
-import { setHttpAddress, setWebsocketAddress, setReaderDirection } from "../../store"
+import { setHttpAddress, setReaderDirection } from "../../store"
 import { ReaderDirection, ReduxState } from "../../types"
 
 const Settings = () => {
     const httpAddress = useSelector((state: ReduxState) => state.httpAddress)
-    const websocketAddress = useSelector((state: ReduxState) => state.websocketAddress)
     const readerDirection = useSelector((state: ReduxState) => state.readerDirection)
     const httpRef = useRef<TextInput | null>(null)
     const websocketRef = useRef<TextInput | null>(null)
     const dispatch = useDispatch()
 
     useEffect(() => httpRef.current?.clear(), [httpAddress])
-    useEffect(() => websocketRef.current?.clear(), [websocketAddress])
 
     const isUrl = (url: string) => {
         try {
@@ -47,29 +45,6 @@ const Settings = () => {
                     onSubmitEditing={(event) => {
                         const address = event.nativeEvent.text.trim();
                         dispatch(setHttpAddress(isUrl(address) ? address : undefined))
-                    }}
-                />
-            </View>
-            <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-                <Text style={{ color: "white", fontSize: 17 }}>Websocket Address</Text>
-                <TextInput
-                    ref={websocketRef}
-                    cursorColor="white"
-                    style={{
-                        backgroundColor: "#222222",
-                        color: "white",
-                        height: 40,
-                        flex: 1
-                    }}
-                    placeholderTextColor="white"
-                    placeholder={websocketAddress || "Ex: http://127.0.0.1:42069"}
-                    autoCapitalize="none"
-                    enterKeyHint="enter"
-                    multiline={false}
-                    numberOfLines={1}
-                    onSubmitEditing={(event) => {
-                        const address = event.nativeEvent.text.trim();
-                        dispatch(setWebsocketAddress(isUrl(address) ? address : undefined))
                     }}
                 />
             </View>

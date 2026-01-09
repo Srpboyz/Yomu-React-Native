@@ -1,6 +1,5 @@
 export interface ReduxState {
     httpAddress?: string
-    websocketAddress?: string
     readerDirection: ReaderDirection
     sources: Source[]
 }

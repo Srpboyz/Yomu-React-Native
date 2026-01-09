@@ -14,9 +14,9 @@ import SourceList from './screens/SourceList';
 import SourcePage from './screens/SourcePage';
 import Reader from './screens/Reader';
 import Settings from './screens/Settings/Settings';
-import { setHttpAddress, setSources, setWebsocketAddress, updateFilters } from './store';
+import { setHttpAddress, setSources, updateFilters } from './store';
 import { ReduxState } from './types';
-import { ws, EventType } from "./websocket";
+import { sse, EventType } from "./sse";
 
 
 const BottomTabs = createBottomTabNavigator({
@@ -78,7 +78,6 @@ const Navigation = createStaticNavigation(Stack)
 
 export default function App() {
     const httpAddress = useSelector((state: ReduxState) => state.httpAddress)
-    const websocketAddress = useSelector((state: ReduxState) => state.websocketAddress)
     const dispatch = useDispatch()
 
     useEffect(() => {
@@ -88,25 +87,19 @@ export default function App() {
             }
         })
 
-        AsyncStorage.getItem("websocketAddress").then(value => {
-            if (value !== null) {
-                dispatch(setWebsocketAddress(value))
-            }
-        })
-
-        ws.addListener(EventType.SOURCE_FILTERS_UPDATED, messageReceived)
+        sse.addListener(EventType.SOURCE_FILTERS_UPDATED, messageReceived)
     }, [])
 
     useEffect(() => {
         if (httpAddress !== undefined) {
             fetch(`${httpAddress}/sources`)
                 .then(res => res.json().then((sources) => dispatch(setSources(sources))))
+            sse.changeUrl(`${httpAddress}/sse`)
         } else {
             dispatch(setSources([]))
+            sse.changeUrl(undefined)
         }
     }, [httpAddress])
-
-    useEffect(() => { ws.changeUrl(websocketAddress) }, [websocketAddress])
 
     const messageReceived = (data: any) => dispatch(updateFilters(data))
 

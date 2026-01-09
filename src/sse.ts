@@ -1,51 +1,53 @@
 import { AppState, NativeEventEmitter } from 'react-native';
+import EventSource from "react-native-sse";
 
-class YomuWebsocket extends NativeEventEmitter {
+
+class YomuSSE extends NativeEventEmitter {
     private url: string | undefined
-    private ws: WebSocket | null
+    private sse: EventSource | null
     private attempts: number
 
     constructor() {
         super();
 
         this.url = undefined;
-        this.ws = null;
         this.attempts = 0;
+        this.sse = null
 
         AppState.addEventListener("change", (state) => {
             if (state !== "active") {
-                this.ws?.close()
-                this.ws = null
+                this.sse?.close()
+                this.sse = null
             } else {
-                this.createWebSocket()
+                this.createSSEClient()
             }
         })
     }
 
-    private createWebSocket() {
+    private createSSEClient() {
         if (this.url === undefined || this.attempts >= 3) return;
         this.attempts++;
 
-        this.ws = new WebSocket(this.url)
-        this.ws.onopen = () => { this.attempts = 0 }
-        this.ws.onmessage = (event) => {
+        this.sse = new EventSource(this.url)
+        this.sse.addEventListener("open", (e) => { this.attempts = 0 })
+        this.sse.addEventListener("message", (event) => {
+            if (event.data === null) return;
             const message: { type: string, data: any } = JSON.parse(event.data)
             this.emit(message.type, message.data)
-        }
-        this.ws.onerror = () => {
-            if (AppState.currentState === "active") { this.createWebSocket() }
-        }
+        })
+        this.sse.addEventListener("error", (e) => {
+            if (AppState.currentState === "active") { this.createSSEClient() }
+        })
     }
 
     public changeUrl(url?: string) {
         this.url = url;
-        this.ws?.close();
         this.attempts = 0;
-        this.createWebSocket();
+        this.createSSEClient();
     }
 }
 
-export const ws = new YomuWebsocket();
+export const sse = new YomuSSE();
 
 export enum EventType {
     SOURCE_FILTERS_UPDATED = "SOURCE_FILTERS_UPDATED",

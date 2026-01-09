@@ -5,7 +5,6 @@ import { ReaderDirection, ReduxState } from './types';
 
 const initialState: ReduxState = {
     httpAddress: undefined,
-    websocketAddress: undefined,
     readerDirection: ReaderDirection.Vertical,
     sources: []
 }
@@ -17,11 +16,6 @@ const settingsSlice = createSlice({
         setHttpAddress: (state, action) => {
             state.httpAddress = action.payload;
             AsyncStorage.setItem("httpAddress", action.payload)
-        },
-        setWebsocketAddress: (state, action) => {
-            const address = action.payload
-            state.websocketAddress = action.payload
-            AsyncStorage.setItem("websocketAddress", address)
         },
         setReaderDirection: (state, action) => {
             state.readerDirection = action.payload
@@ -48,4 +42,4 @@ export const store = configureStore({
     reducer: settingsSlice.reducer
 })
 
-export const { setHttpAddress, setReaderDirection, setSources, setWebsocketAddress, updateFilters } = settingsSlice.actions
+export const { setHttpAddress, setReaderDirection, setSources, updateFilters } = settingsSlice.actions

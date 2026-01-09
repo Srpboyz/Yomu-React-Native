@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import ImageButton from "../../components/ImageButton";
 import MangaView from "../../components/MangaView";
 import { Category, Manga, ReduxState } from "../../types";
-import { ws, EventType } from "../../websocket";
+import { sse, EventType } from "../../sse";
 
 const Library = () => {
     const [mangas, setMangas] = useState<Manga[]>([])
@@ -36,7 +36,7 @@ const Library = () => {
             EventType.MANGA_DETAILS_UPDATE,
         ]
         events.forEach((eventType) => {
-            ws.addListener(eventType, (data: Manga) => messageReceived(eventType, data))
+            sse.addListener(eventType, (data: Manga) => messageReceived(eventType, data))
         })
     }, [])
 

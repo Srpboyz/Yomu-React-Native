@@ -3,7 +3,7 @@ import { TextInput } from "react-native";
 import { useSelector } from "react-redux";
 import MangaList from "../../components/MangaList";
 import { Manga, ReduxState, Source } from "../../types";
-import { ws, EventType } from "../../websocket";
+import { sse, EventType } from "../../sse";
 
 interface Props {
     source: Source
@@ -19,7 +19,7 @@ const SearchMangas = ({ source }: Props) => {
     useEffect(() => {
         const events = [EventType.LIBRARY_ADD, EventType.LIBRARY_REMOVE, EventType.MANGA_DETAILS_UPDATE]
         const subscriptions = events.map((eventType) => (
-            ws.addListener(eventType, (data) => messageReceived(eventType, data))
+            sse.addListener(eventType, (data) => messageReceived(eventType, data))
         ))
         return () => subscriptions.forEach((subscription) => subscription.remove())
     }, [])

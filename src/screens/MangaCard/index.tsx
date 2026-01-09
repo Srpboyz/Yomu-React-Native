@@ -5,7 +5,7 @@ import { Image } from "expo-image";
 import { useSelector } from "react-redux";
 import ImageButton from "../../components/ImageButton";
 import { Chapter, Manga, ReduxState } from "../../types";
-import { ws, EventType } from "../../websocket";
+import { sse, EventType } from "../../sse";
 import ChapterView from "./ChapterView";
 
 
@@ -31,7 +31,7 @@ const MangaCard = ({ route }: Props) => {
         ]
 
         const subscriptions = events.map((eventType) => (
-            ws.addListener(eventType, (data) => messageReceived(eventType, data))
+            sse.addListener(eventType, (data) => messageReceived(eventType, data))
         ))
 
         !manga.initialized ? updateManga() : fetchChapters()
