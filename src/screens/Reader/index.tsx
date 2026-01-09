@@ -23,7 +23,7 @@ const Reader = ({ route }: Props) => {
     const { width } = useWindowDimensions()
     const { chapters } = route.params
     const [currentChapterIndex, setCurrentChapterIndex] = useState<number>(route.params.currentChapterIndex)
-    const [pages, setPages] = useState<string[]>([])
+    const [pageCount, setPageCount] = useState<number>(0)
     const [currentPage, setCurrentPage] = useState<number>(0)
     const [overlayShown, setOverlayShown] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(true)
@@ -65,12 +65,12 @@ const Reader = ({ route }: Props) => {
         const chapter = chapters[currentChapterIndex]
         let cancelled = false
 
-        setPages([])
+        setPageCount(0)
         setLoading(true)
 
         fetch(`${httpAddress}/chapter/${chapter.id}/pages`)
-            .then(res => res.json().then(pages => {
-                if (!cancelled) { setPages([...pages]) }
+            .then(res => res.json().then(data => {
+                if (!cancelled) { setPageCount(data.pages) }
             }))
             .catch(() => navigation.goBack())
             .finally(() => setLoading(false))
@@ -196,13 +196,13 @@ const Reader = ({ route }: Props) => {
                 {!loading
                     ? <FlatList
                         ref={ref}
-                        data={pages}
+                        data={Array.from({ length: pageCount }, (_, index) => index)}
                         contentContainerStyle={{ alignItems: "center" }}
-                        renderItem={({ item, index }) => (
-                            <PageView key={index}
+                        renderItem={({ item }) => (
+                            <PageView key={item}
                                 styles={animatedStyle}
                                 isHorizontal={isHorizontal}
-                                url={`${httpAddress}/chapter/${chapters[currentChapterIndex].id}/page?url=${item}`}
+                                url={`${httpAddress}/chapter/${chapters[currentChapterIndex].id}/page/${item}`}
                             />
                         )}
                         onViewableItemsChanged={({ viewableItems }) => setCurrentPage(viewableItems.length > 0 ? (viewableItems[0].index || 0) : 0)}
@@ -264,7 +264,7 @@ const Reader = ({ route }: Props) => {
                 bottom: 5 + (overlayShown ? insets.bottom : 0)
             }}>
                 <Text style={{ color: "white", textShadowColor: "black", textShadowRadius: 2 }}>
-                    {pages.length > 0 ? currentPage + 1 : 0} / {pages.length}
+                    {pageCount > 0 ? currentPage + 1 : 0} / {pageCount}
                 </Text>
             </View>
 
@@ -283,7 +283,7 @@ const Reader = ({ route }: Props) => {
                 <ImageButton source={require("../../../assets/previous.png")} onPress={prevChapter} />
                 <Slider
                     style={{ width: "70%" }}
-                    maximumValue={pages.length - 1}
+                    maximumValue={pageCount - 1}
                     value={currentPage}
                     onValueChange={(page) => { ref.current.scrollToIndex({ index: page, animated: false }); return false }}
                     thumbTintColor={"white"}
