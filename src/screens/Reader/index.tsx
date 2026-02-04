@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, View, useWindowDimensions } from "react-native"
+import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, View } from "react-native"
 import { GestureDetector, Gesture, GestureHandlerRootView } from "react-native-gesture-handler";
-import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { StaticScreenProps, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Slider } from '@react-native-assets/slider'
@@ -20,7 +19,6 @@ type Props = StaticScreenProps<{
 
 
 const Reader = ({ route }: Props) => {
-    const { width } = useWindowDimensions()
     const { chapters } = route.params
     const [currentChapterIndex, setCurrentChapterIndex] = useState<number>(route.params.currentChapterIndex)
     const [pageCount, setPageCount] = useState<number>(0)
@@ -33,11 +31,6 @@ const Reader = ({ route }: Props) => {
     const navigation = useNavigation()
     const insets = useSafeAreaInsets()
     const dispatch = useDispatch()
-
-    const startScale = useSharedValue(0)
-    const scale = useSharedValue(1)
-    const offsetX = useSharedValue(0)
-    const prevOffsetX = useSharedValue(0);
     const ref = useRef<any>()
 
 
@@ -120,75 +113,12 @@ const Reader = ({ route }: Props) => {
         )
     }
 
-    const clamp = (val: number, min: number, max: number) => {
-        return Math.min(Math.max(val, min), max);
-    }
-
     const singleTap = Gesture.Tap()
         .maxDistance(3)
         .onEnd((e, success) => { if (success) setOverlayShown(!overlayShown) })
         .runOnJS(true);
-    const doubleTap = Gesture.Tap()
-        .numberOfTaps(2)
-        .onEnd(() => {
-            const newScale = scale.value == 1 ? 1.5 : 1;
-            scale.value = withTiming(newScale, { duration: 100 });
-
-            prevOffsetX.value = 0
-            offsetX.value = withTiming(0, { duration: 100 })
-        })
-        .runOnJS(true);
-    const pinchGesture = Gesture.Pinch()
-        .onStart(() => {
-            startScale.value = scale.value
-        })
-        .onUpdate((e) => {
-            scale.value = clamp(startScale.value * e.scale, 0.5, 1.5);
-        })
-        .onEnd((e) => {
-            const newScale = clamp(startScale.value * e.scale, 0.5, 1.5)
-            if (newScale <= 1) {
-                prevOffsetX.value = 0
-                offsetX.value = withTiming(0, { duration: 100 })
-            }
-            else {
-                const maxOffset = Math.abs(width * (newScale - 1)) / 2;
-                const newOffsetX = clamp(offsetX.value, -maxOffset, maxOffset)
-                offsetX.value = withTiming(newOffsetX, { duration: 100 })
-            }
-        })
-        .runOnJS(true);
-    const panGesture = Gesture.Pan()
-        .maxPointers(1)
-        .onStart(() => { prevOffsetX.value = offsetX.value })
-        .onUpdate((e) => {
-            if (scale.value <= 1) return;
-
-            const maxOffset = Math.abs(width * (scale.value - 1)) / 2;
-            const maxOffsetChange = width / 2 - 50
-            const newOffsetX = clamp(prevOffsetX.value + e.translationX, -maxOffsetChange, maxOffsetChange)
-
-            offsetX.value = clamp(newOffsetX, -maxOffset, maxOffset);
-        })
-        .runOnJS(true)
     const nativeGesture = Gesture.Native();
-    const gestures = Gesture.Race(
-        pinchGesture,
-        Gesture.Simultaneous(nativeGesture, panGesture),
-        Gesture.Exclusive(doubleTap, singleTap)
-    );
-
-    const animatedStyle = useAnimatedStyle(() => {
-        const styleWidth = width * (!isHorizontal ? scale.value : 1)
-        const translateX = !isHorizontal ? offsetX.value : 0
-
-        return {
-            width: styleWidth,
-            transform: [{ translateX: translateX }]
-        }
-
-    });
-
+    const gestures = Gesture.Race(nativeGesture, singleTap);
 
     return (
         <GestureHandlerRootView style={{ backgroundColor: "black", width: "100%", height: "100%" }}>
@@ -200,7 +130,6 @@ const Reader = ({ route }: Props) => {
                         contentContainerStyle={{ alignItems: "center" }}
                         renderItem={({ item }) => (
                             <PageView key={item}
-                                styles={animatedStyle}
                                 isHorizontal={isHorizontal}
                                 url={`${httpAddress}/chapter/${chapters[currentChapterIndex].id}/page/${item}`}
                             />

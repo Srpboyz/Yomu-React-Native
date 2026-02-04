@@ -5,7 +5,6 @@ import { Image, useImage } from "expo-image";
 
 interface Props {
     isHorizontal: boolean
-    styles: any,
     url: string,
 }
 
@@ -66,14 +65,11 @@ const PageView = (props: Props) => {
 
     return (
         <Animated.View
-            style={[
-                {
-                    width: width,
-                    alignItems: alignItems,
-                    justifyContent: justifyContent
-                },
-                props.styles
-            ]}
+            style={{
+                width: width,
+                alignItems: alignItems,
+                justifyContent: justifyContent
+            }}
         >
             {getContent()}
         </Animated.View>
