@@ -9,7 +9,6 @@ const Settings = () => {
     const httpAddress = useSelector((state: ReduxState) => state.httpAddress)
     const readerDirection = useSelector((state: ReduxState) => state.readerDirection)
     const httpRef = useRef<TextInput | null>(null)
-    const websocketRef = useRef<TextInput | null>(null)
     const dispatch = useDispatch()
 
     useEffect(() => httpRef.current?.clear(), [httpAddress])

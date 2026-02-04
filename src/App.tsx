@@ -13,7 +13,7 @@ import MangaCard from './screens/MangaCard';
 import SourceList from './screens/SourceList';
 import SourcePage from './screens/SourcePage';
 import Reader from './screens/Reader';
-import Settings from './screens/Settings/Settings';
+import Settings from './screens/Settings';
 import { setHttpAddress, setSources, updateFilters } from './store';
 import { ReduxState } from './types';
 import { sse, EventType } from "./sse";
