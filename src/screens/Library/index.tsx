@@ -41,6 +41,11 @@ const Library = () => {
     }, [])
 
     useEffect(() => {
+        setCategories([])
+        setMangas([])
+        setFilteredMangas([])
+        setSearching(false)
+
         if (httpAddress !== undefined) {
             fetch(`${httpAddress}/library`).then(res => res.json().then(setMangas))
             fetch(`${httpAddress}/category`).then(res => res.json().then((categories: Category[]) =>
@@ -54,11 +59,6 @@ const Library = () => {
                     return { ...category, mangas: [] }
                 }))
             ))
-        } else {
-            setCategories([])
-            setMangas([])
-            setFilteredMangas([])
-            setSearching(false)
         }
     }, [httpAddress])
 
