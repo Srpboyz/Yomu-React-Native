@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, View } from "react-native"
-import { GestureDetector, Gesture, GestureHandlerRootView } from "react-native-gesture-handler";
+import { StatusBar, StyleSheet, Text, View } from "react-native"
 import { StaticScreenProps, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Slider } from '@react-native-assets/slider'
 import * as NavigationBar from "expo-navigation-bar";
 import { useSelector, useDispatch } from "react-redux";
 import { YomuWebtoonView } from "../../../modules/yomu-webtoon-view";
+import { YomuPagerView } from "../../../modules/yomu-pager-view";
 import ImageButton from "../../components/ImageButton";
 import { setReaderDirection } from "../../store";
 import { Chapter, ReaderDirection, ReduxState } from "../../types";
-import PageView from "./PageView";
+import Spinner from "./Spinner";
 
 
 type Props = StaticScreenProps<{
@@ -124,58 +124,31 @@ const Reader = ({ route }: Props) => {
         )
     }
 
-    const singleTap = Gesture.Tap()
-        .maxDistance(3)
-        .onEnd((_e, success) => { if (success) toggleOverlay() })
-        .runOnJS(true)
-    const doubleTap = Gesture.Tap().numberOfTaps(2)
-    const tapGesture = Gesture.Exclusive(doubleTap, singleTap)
-
     return (
-        <GestureHandlerRootView style={{ backgroundColor: "black", width: "100%", height: "100%" }}>
+        <View style={{ backgroundColor: "black", width: "100%", height: "100%" }}>
             {loading
-                ? <GestureDetector gesture={tapGesture}>
-                    <View
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            alignItems: "center",
-                            justifyContent: "center"
-                        }}
-                    >
-                        <ActivityIndicator size="large" color="white" />
-                    </View>
-                </GestureDetector> : (
-                    isHorizontal
-                        ? <GestureDetector gesture={tapGesture}>
-                            <FlatList
-                                ref={ref}
-                                data={Array.from({ length: pageCount }, (_, index) => index)}
-                                contentContainerStyle={{ alignItems: "center" }}
-                                renderItem={({ item }) => (
-                                    <PageView key={item}
-                                        isHorizontal={isHorizontal}
-                                        url={`${httpAddress}/chapter/${currentChapterId}/page/${item}`}
-                                    />
-                                )}
-                                onViewableItemsChanged={({ viewableItems }) => setCurrentPage(viewableItems.length > 0 ? (viewableItems[0].index || 0) : 0)}
-                                onScroll={() => setOverlayShown(false)}
-                                onEndReached={markChapterAsRead}
-                                onScrollToIndexFailed={() => { }}
-                                horizontal={true}
-                                inverted={readerDirection === ReaderDirection.LeftToRight}
-                                pagingEnabled={true}
-                            />
-                        </GestureDetector>
-                        : <YomuWebtoonView
-                            ref={ref}
-                            style={{ width: "100%", height: "100%" }}
-                            urls={pageUrls}
-                            onCurrentIndexChanged={(e) => setCurrentPage(e.nativeEvent.newIndex)}
-                            onScroll={() => setOverlayShown(false)}
-                            onEndReached={markChapterAsRead}
-                            onSingleTap={toggleOverlay}
-                        />
+                ? <Spinner />
+                : (isHorizontal
+                    ?
+                    <YomuPagerView
+                        ref={ref}
+                        style={{ width: "100%", height: "100%" }}
+                        urls={pageUrls}
+                        inverted={readerDirection === ReaderDirection.LeftToRight}
+                        onCurrentIndexChanged={(e) => setCurrentPage(e.nativeEvent.newIndex)}
+                        onScroll={() => setOverlayShown(false)}
+                        onEndReached={markChapterAsRead}
+                        onSingleTap={toggleOverlay}
+                    />
+                    : <YomuWebtoonView
+                        ref={ref}
+                        style={{ width: "100%", height: "100%" }}
+                        urls={pageUrls}
+                        onCurrentIndexChanged={(e) => setCurrentPage(e.nativeEvent.newIndex)}
+                        onScroll={() => setOverlayShown(false)}
+                        onEndReached={markChapterAsRead}
+                        onSingleTap={toggleOverlay}
+                    />
                 )
             }
 
@@ -244,7 +217,7 @@ const Reader = ({ route }: Props) => {
                 />
                 <ImageButton source={require("../../../assets/next.png")} onPress={nextChapter} />
             </View>
-        </GestureHandlerRootView>
+        </View>
     )
 }
 
