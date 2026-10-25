@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, View } from "react-native"
 import { GestureDetector, Gesture, GestureHandlerRootView } from "react-native-gesture-handler";
 import { StaticScreenProps, useNavigation } from "@react-navigation/native";
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Slider } from '@react-native-assets/slider'
 import * as NavigationBar from "expo-navigation-bar";
 import { useSelector, useDispatch } from "react-redux";
+import { YomuWebtoonView } from "../../../modules/yomu-webtoon-view";
 import ImageButton from "../../components/ImageButton";
 import { setReaderDirection } from "../../store";
 import { Chapter, ReaderDirection, ReduxState } from "../../types";
@@ -32,6 +33,14 @@ const Reader = ({ route }: Props) => {
     const insets = useSafeAreaInsets()
     const dispatch = useDispatch()
     const ref = useRef<any>()
+
+    const currentChapterId = chapters[currentChapterIndex].id
+
+    // Stable between renders so the native view only receives a new list when it really changes.
+    const pageUrls = useMemo(
+        () => Array.from({ length: pageCount }, (_, i) => `${httpAddress}/chapter/${currentChapterId}/page/${i}`),
+        [pageCount, httpAddress, currentChapterId]
+    )
 
 
     useEffect(() => {
@@ -86,6 +95,8 @@ const Reader = ({ route }: Props) => {
         fetch(`${httpAddress}/chapter/${chapter.id}/read`, { method: "POST" })
     }
 
+    const toggleOverlay = () => setOverlayShown(isShown => !isShown)
+
     const getNextReaderDirection = (direction: ReaderDirection) => {
         if (direction === ReaderDirection.Vertical) {
             return (
@@ -115,34 +126,16 @@ const Reader = ({ route }: Props) => {
 
     const singleTap = Gesture.Tap()
         .maxDistance(3)
-        .onEnd((e, success) => { if (success) setOverlayShown(!overlayShown) })
-        .runOnJS(true);
-    const nativeGesture = Gesture.Native();
-    const gestures = Gesture.Race(nativeGesture, singleTap);
+        .onEnd((_e, success) => { if (success) toggleOverlay() })
+        .runOnJS(true)
+    const doubleTap = Gesture.Tap().numberOfTaps(2)
+    const tapGesture = Gesture.Exclusive(doubleTap, singleTap)
 
     return (
         <GestureHandlerRootView style={{ backgroundColor: "black", width: "100%", height: "100%" }}>
-            <GestureDetector gesture={gestures}>
-                {!loading
-                    ? <FlatList
-                        ref={ref}
-                        data={Array.from({ length: pageCount }, (_, index) => index)}
-                        contentContainerStyle={{ alignItems: "center" }}
-                        renderItem={({ item }) => (
-                            <PageView key={item}
-                                isHorizontal={isHorizontal}
-                                url={`${httpAddress}/chapter/${chapters[currentChapterIndex].id}/page/${item}`}
-                            />
-                        )}
-                        onViewableItemsChanged={({ viewableItems }) => setCurrentPage(viewableItems.length > 0 ? (viewableItems[0].index || 0) : 0)}
-                        onScroll={(e) => setOverlayShown(false)}
-                        onEndReached={markChapterAsRead}
-                        onScrollToIndexFailed={() => { }}
-                        horizontal={isHorizontal}
-                        inverted={readerDirection === ReaderDirection.LeftToRight}
-                        pagingEnabled={isHorizontal}
-                    />
-                    : <View
+            {loading
+                ? <GestureDetector gesture={tapGesture}>
+                    <View
                         style={{
                             width: "100%",
                             height: "100%",
@@ -152,8 +145,39 @@ const Reader = ({ route }: Props) => {
                     >
                         <ActivityIndicator size="large" color="white" />
                     </View>
-                }
-            </GestureDetector>
+                </GestureDetector> : (
+                    isHorizontal
+                        ? <GestureDetector gesture={tapGesture}>
+                            <FlatList
+                                ref={ref}
+                                data={Array.from({ length: pageCount }, (_, index) => index)}
+                                contentContainerStyle={{ alignItems: "center" }}
+                                renderItem={({ item }) => (
+                                    <PageView key={item}
+                                        isHorizontal={isHorizontal}
+                                        url={`${httpAddress}/chapter/${currentChapterId}/page/${item}`}
+                                    />
+                                )}
+                                onViewableItemsChanged={({ viewableItems }) => setCurrentPage(viewableItems.length > 0 ? (viewableItems[0].index || 0) : 0)}
+                                onScroll={() => setOverlayShown(false)}
+                                onEndReached={markChapterAsRead}
+                                onScrollToIndexFailed={() => { }}
+                                horizontal={true}
+                                inverted={readerDirection === ReaderDirection.LeftToRight}
+                                pagingEnabled={true}
+                            />
+                        </GestureDetector>
+                        : <YomuWebtoonView
+                            ref={ref}
+                            style={{ width: "100%", height: "100%" }}
+                            urls={pageUrls}
+                            onCurrentIndexChanged={(e) => setCurrentPage(e.nativeEvent.newIndex)}
+                            onScroll={() => setOverlayShown(false)}
+                            onEndReached={markChapterAsRead}
+                            onSingleTap={toggleOverlay}
+                        />
+                )
+            }
 
             <View
                 style={{
@@ -214,7 +238,7 @@ const Reader = ({ route }: Props) => {
                     style={{ width: "70%" }}
                     maximumValue={pageCount - 1}
                     value={currentPage}
-                    onValueChange={(page) => { ref.current.scrollToIndex({ index: page, animated: false }); return false }}
+                    onValueChange={(page) => { ref.current.scrollToIndex(page); return false }}
                     thumbTintColor={"white"}
                     step={1}
                 />
